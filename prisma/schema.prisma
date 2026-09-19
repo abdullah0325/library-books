@@ -1,0 +1,212 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         String   @default("USER") // 'ADMIN', 'CREATOR', 'USER'
+  avatarUrl    String?
+  bio          String?
+  status       String   @default("ACTIVE") // 'ACTIVE', 'SUSPENDED'
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  creator        Creator?
+  orders         Order[]
+  library        UserLibrary[]
+  reviews        Review[]
+  readingHistory ReadingHistory[]
+  reports        Report[]
+
+  @@map("users")
+}
+
+model Creator {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  displayName   String
+  slug          String   @unique
+  bio           String?
+  website       String?
+  avatarUrl     String?
+  verified      Int      @default(0)
+  totalSales    Int      @default(0)
+  totalEarnings Float    @default(0.0)
+  createdAt     DateTime @default(now())
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  books Book[]
+
+  @@map("creators")
+}
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  icon        String?
+  bookCount   Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  books Book[]
+
+  @@map("categories")
+}
+
+model Author {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  slug        String   @unique
+  bio         String?
+  photoUrl    String?
+  bornYear    Int?
+  nationality String?
+  createdAt   DateTime @default(now())
+
+  @@map("authors")
+}
+
+model Book {
+  id              String   @id @default(uuid())
+  title           String
+  slug            String   @unique
+  description     String
+  excerpt         String?
+  authorId        String?
+  authorName      String
+  creatorId       String
+  categoryId      String
+  categoryName    String
+  language        String   @default("English")
+  pages           Int      @default(1)
+  fileSize        String   @default("1.2 MB")
+  price           Float    @default(0.0)
+  isFree          Int      @default(1)
+  status          String   @default("APPROVED") // 'DRAFT', 'PENDING', 'APPROVED', 'PUBLISHED', 'REJECTED', 'SUSPENDED'
+  rejectionReason String?
+  coverKey        String?
+  coverUrl        String
+  pdfKey          String
+  pdfFileName     String
+  isbn            String?
+  publicationYear Int?
+  tags            String?  // JSON array string of tags
+  featured        Int      @default(0)
+  viewCount       Int      @default(0)
+  downloadCount   Int      @default(0)
+  purchaseCount   Int      @default(0)
+  rating          Float    @default(5.0)
+  reviewCount     Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  creator        Creator          @relation(fields: [creatorId], references: [id])
+  category       Category         @relation(fields: [categoryId], references: [id])
+  orders         Order[]
+  libraryEntries UserLibrary[]
+  reviews        Review[]
+  readingHistory ReadingHistory[]
+  reports        Report[]
+
+  @@index([status])
+  @@index([creatorId])
+  @@index([categoryId])
+  @@map("books")
+}
+
+model Order {
+  id            String   @id @default(uuid())
+  orderNumber   String   @unique
+  userId        String
+  bookId        String
+  amount        Float
+  currency      String   @default("USD")
+  status        String   @default("COMPLETED") // 'COMPLETED', 'PENDING', 'REFUNDED'
+  paymentMethod String   @default("Card")
+  createdAt     DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  book Book @relation(fields: [bookId], references: [id])
+
+  @@map("orders")
+}
+
+model UserLibrary {
+  id              String    @id @default(uuid())
+  userId          String
+  bookId          String
+  acquiredAt      DateTime  @default(now())
+  lastReadAt      DateTime?
+  currentPage     Int       @default(1)
+  totalPages      Int       @default(1)
+  progressPercent Int       @default(0)
+  isFavorite      Int       @default(0)
+  accessType      String    @default("PURCHASED") // 'PURCHASED', 'FREE', 'GIFT'
+
+  user User @relation(fields: [userId], references: [id])
+  book Book @relation(fields: [bookId], references: [id])
+
+  @@unique([userId, bookId])
+  @@map("user_library")
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  userId    String
+  bookId    String
+  rating    Int
+  comment   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+  book Book @relation(fields: [bookId], references: [id])
+
+  @@unique([userId, bookId])
+  @@map("reviews")
+}
+
+model ReadingHistory {
+  id              String   @id @default(uuid())
+  userId          String
+  bookId          String
+  pageNumber      Int
+  durationSeconds Int      @default(60)
+  readAt          DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  book Book @relation(fields: [bookId], references: [id])
+
+  @@map("reading_history")
+}
+
+model Report {
+  id             String   @id @default(uuid())
+  reporterUserId String
+  bookId         String
+  reason         String
+  details        String?
+  status         String   @default("PENDING") // 'PENDING', 'RESOLVED', 'DISMISSED'
+  createdAt      DateTime @default(now())
+
+  user User @relation(fields: [reporterUserId], references: [id])
+  book Book @relation(fields: [bookId], references: [id])
+
+  @@map("reports")
+}
+
+model SiteSetting {
+  key   String @id
+  value String
+
+  @@map("site_settings")
+}
