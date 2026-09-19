@@ -1,0 +1,8 @@
+{
+  "name": "KitabKhana - Digital Library & PDF Marketplace",
+  "description": "A digital library and PDF book marketplace to discover, purchase, read online, and publish digital books and documents with author and admin dashboards.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
