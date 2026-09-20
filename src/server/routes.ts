@@ -844,13 +844,13 @@ router.get("/creator/dashboard", requireAuth, requireRole(["CREATOR", "ADMIN"]),
 // Creator uploads new book
 router.post(
   "/creator/books",
-  requireAuth,
-  requireRole(["CREATOR", "ADMIN"]),
-  upload.fields([
+  requireAuth as any,
+  requireRole(["CREATOR", "ADMIN"]) as any,
+  (upload.fields([
     { name: "pdfFile", maxCount: 1 },
     { name: "coverImage", maxCount: 1 },
-  ]),
-  async (req: AuthenticatedRequest, res: Response) => {
+  ]) as any),
+  async (req: any, res: Response) => {
     try {
       const user = req.user!;
       let creatorId = user.creatorId;
